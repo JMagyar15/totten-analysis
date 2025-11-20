@@ -1,18 +1,18 @@
 #do the backmigration, save coalescence surfaces to file, compute uncertainties and save these with the locations, might as well remake the masks when plotting uncertainty contours...
 import numpy as np
 import os
-from iqvis import spatial_analysis as sa
-from iqvis import data_objects as do
+from cryoquake import spatial_analysis as sa
+from cryoquake import data_objects as do
 from obspy.core import read, UTCDateTime, inventory
 from obspy.geodetics import degrees2kilometers, kilometers2degrees
 import pandas as pd
 
 
-decimation = 25
+decimation = 10
 
-backmigrate = True
-migrate_P_wave = False
-compute_results = True
+backmigrate = False
+migrate_P_wave = True
+compute_results = False
 compute_P_results = True
 
 t1 = UTCDateTime(2018,12,24)
@@ -50,14 +50,13 @@ if backmigrate:
 
 
     for cluster_num, stream in stacked_streams.items():
-        stream = stream.filter('bandpass',freqmin=1,freqmax=5)
+        stream = stream.filter('bandpass',freqmin=1,freqmax=10) 
 
-        east_grid = np.linspace(-10,5,100)
-        north_grid = np.linspace(-5,10,100)
-        depth_grid = np.linspace(0,4,50)
-
+        east_grid = np.linspace(-10,5,50)
+        north_grid = np.linspace(-5,10,50)
+        depth_grid = np.linspace(0,3,20)
+#! previously had sta=1
         east_grid, north_grid, depth_grid, t_grid, coal_surf, sta_xy, centre = sa.CoalescenceSurface(east_grid,north_grid,depth_grid,stream,inv,sta=1,lta=5,normalise=True,modulate=True,g=8,mod_win=0.2,smooth=30,decimation=decimation,mod_overlap=0.95)
-
         np.savez(os.path.join(coal_path,'coalescence_function_'+str(cluster_num)),x=east_grid,y=north_grid,z=depth_grid,t=t_grid,coal=coal_surf)
 
 
@@ -68,13 +67,13 @@ if migrate_P_wave:
 
 
     for cluster_num, stream in stacked_streams.items():
-        stream = stream.filter('bandpass',freqmin=1,freqmax=5)
+        stream = stream.filter('bandpass',freqmin=1,freqmax=10)
 
-        east_grid = np.linspace(-10,5,100)
-        north_grid = np.linspace(-5,10,100)
-        depth_grid = np.linspace(0,4,50)
+        east_grid = np.linspace(-10,5,50)
+        north_grid = np.linspace(-5,10,50)
+        depth_grid = np.linspace(0,3,20)
 
-        east_grid, north_grid, depth_grid, t_grid, coal_surf, sta_xy, centre = sa.CoalescenceSurface(east_grid,north_grid,depth_grid,stream,inv,sta=1,lta=5,p_detect='P',normalise=True,modulate=True,mod_win=0.2,smooth=30,decimation=decimation,g=4,polZ=True)
+        east_grid, north_grid, depth_grid, t_grid, coal_surf, sta_xy, centre = sa.CoalescenceSurface(east_grid,north_grid,depth_grid,stream,inv,sta=0.2,lta=5,normalise=False,modulate=True,g=8,mod_win=1.0,smooth=30,decimation=decimation,p_detect='radial_transverse',s_detect=None,mod_overlap=0.95)
 
         np.savez(os.path.join(coal_path,'P_coalescence_function_'+str(cluster_num)),x=east_grid,y=north_grid,z=depth_grid,t=t_grid,coal=coal_surf)
 
