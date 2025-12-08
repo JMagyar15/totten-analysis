@@ -1,6 +1,6 @@
 import numpy as np
 from obspy.core.inventory import inventory
-from iqvis import data_objects as do
+from cryoquake import data_objects as do
 from obspy.core import UTCDateTime, read
 import os
 from obspy.core import Stream, Trace
@@ -9,7 +9,7 @@ from tqdm import tqdm
 import pandas as pd
 
 raw_stack_waveforms = False
-low_stack_waveforms = False
+low_stack_waveforms = True
 high_stack_waveforms = False
 
 stack_waveforms = False
@@ -57,7 +57,7 @@ def fit_func(beta, x):
 
 #firstly load in the stacked waveforms to do the picking on
 
-temp_cat = do.EventCatalogue(t1,t2,os.path.join(c_path),templates=True)
+temp_cat = do.EventCatalogue(t1,t2,os.path.join(c_path,'network','filtered'),templates=True)
 groups = temp_cat.group_split()
 
 
@@ -149,7 +149,7 @@ if low_stack_waveforms:
 
         for event in tqdm(group_cat,total=group_cat.N):
             event.attach_waveforms(inv,w_path,buffer=10,length=25)
-            event.filter('bandpass',freqmin=0.1,freqmax=100)  
+            event.filter('bandpass',freqmin=1,freqmax=10)  
 
             streams.append(event.get_data_window())
 
@@ -164,7 +164,7 @@ if low_stack_waveforms:
             stacked_stream += tr
 
         stacked_stream = stacked_stream.split()
-        stacked_stream.write(os.path.join(path,'stacked_waveforms','low_stacked_waveforms_cluster_'+str(key) + '.mseed'))
+        stacked_stream.write(os.path.join(path,'stacked_waveforms','filtered_stacked_waveforms_cluster_'+str(key) + '.mseed'))
 
     #     trace_dict[key] = {}
 

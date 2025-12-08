@@ -3,25 +3,28 @@
 import os
 #os.chdir('..') #change cwd so local functions can be imported
 
-from iqvis import stream_handling as sh
-from iqvis import data_objects as do
-from iqvis import spatial_analysis as sa
-from iqvis import moment_magnitude as mm
+from cryoquake import stream_handling as sh
+from cryoquake import data_objects as do
+from cryoquake import spatial_analysis as sa
+from cryoquake import moment_magnitude as mm
 from obspy.core.inventory import inventory
 import matplotlib.pyplot as plt
-from iqvis import dayplot_backend as db
+from cryoquake import dayplot_backend as db
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 import tqdm
 import numpy as np
 from obspy.core import read, UTCDateTime
+import xarray as xr
 
 network = False
 triplet = False
 single = False
 templates = False
 rel_amps = False
-moment_mags = True
+moment_mags = False
+group_mags = True
+
 
 t1 = sh.UTCDateTime(2018,12,24)
 t2 = sh.UTCDateTime(2019,1,30)
@@ -365,14 +368,14 @@ if rel_amps:
 
 if moment_mags:
 
-    sta_xy, centre = sa.CartesianStationsDF(inv.select(station='TI?A'))
-    icequake_loc = pd.read_csv(os.path.join(coal_path,'backmigration_results.csv'),index_col=0)
+    #sta_xy, centre = sa.CartesianStationsDF(inv.select(station='TI?A'))
+    #icequake_loc = pd.read_csv(os.path.join(coal_path,'backmigration_results.csv'),index_col=0) #TODO change this to the travel time locations
 
     for daychunk in chunk:
         #look through all matched events and estimate the moment magnitude by fitting the Brune model to the spectra
-        temp_cat = do.EventCatalogue(daychunk.starttime,daychunk.endtime,os.path.join(c_path,'network'),templates=True)
+        temp_cat = do.EventCatalogue(daychunk.starttime,daychunk.endtime,os.path.join(c_path,'network','low_threshold'),templates=True) #TODO change this to the low threshold catalogue
         att_cat = temp_cat.attributes.drop(labels='group',axis=1)
-        filename = os.path.join(c_path,'network','moment_magnitude__' + daychunk.str_name + '.csv')
+        filename = os.path.join(c_path,'network','low_threshold','moment_magnitude__' + daychunk.str_name + '.csv') #TODO change this to the low threshold folder
         
 
         for event in tqdm.tqdm(temp_cat,total=temp_cat.N):
@@ -390,14 +393,16 @@ if moment_mags:
                 tr.remove_response(inv,output='DISP')
 
 
-            coal_file = np.load(os.path.join(coal_path,'coalescence_function_' + str(cluster_num) + '.npz'))
-            x, y, z, t, coal = coal_file['x'], coal_file['y'], coal_file['z'], coal_file['t'], coal_file['coal']
+            #coal_file = np.load(os.path.join(coal_path,'coalescence_function_' + str(cluster_num) + '.npz'))
+            #x, y, z, t, coal = coal_file['x'], coal_file['y'], coal_file['z'], coal_file['t'], coal_file['coal']
 
-            fit, uncertainties, centres = sa.UncertaintyQuantBackM(x,y,z,t,inv.select(station='TI?A'),coal,contours=[0.75])
+            #fit, uncertainties, centres = sa.UncertaintyQuantBackM(x,y,z,t,inv.select(station='TI?A'),coal,contours=[0.75])
 
-            arrivals = sa.ArrivalTimes(inv.select(station='TI?A'),fit,uncertainties[0.75])
+            #arrivals = sa.ArrivalTimes(inv.select(station='TI?A'),fit,uncertainties[0.75]) #TODO need to get the uncertainties from arrival times and include these in here.
 
             try:
+                gamma_xr = xr.load_dataset(os.path.join(path,'misfit','misfit_surface_'+str(cluster_num)+'.nc'))
+                arrivals = mm.Misfit2Arrivals(gamma_xr)
                 sta_mag = mm.StationMomentMagnitude(disp_stream,arrivals,freqmin=1,freqmax=10)
                 M0_out, Mw_out, fc_out = mm.CombinedMomentMagnitude(sta_mag)
                 Mw = Mw_out.nominal_value
@@ -406,7 +411,7 @@ if moment_mags:
                 dMw = Mw_out.std_dev
                 dM0 = M0_out.std_dev
                 dfc = fc_out.std_dev
-            except RuntimeError: 
+            except (RuntimeError, FileNotFoundError) as e: 
                 Mw = np.nan
                 M0 = np.nan
                 fc = np.nan

@@ -6,6 +6,7 @@ from cryoquake import data_objects as do
 from obspy.core import read, UTCDateTime, inventory
 from obspy.geodetics import degrees2kilometers, kilometers2degrees
 import pandas as pd
+import xarray as xr
 
 
 decimation = 10
@@ -13,7 +14,7 @@ decimation = 10
 backmigrate = False
 migrate_P_wave = True
 compute_results = False
-compute_P_results = True
+compute_P_results = False
 
 t1 = UTCDateTime(2018,12,24)
 t2 = UTCDateTime(2019,1,30)
@@ -42,6 +43,26 @@ for file in inv_files:
 
 inv = inv.select(station='TI?A',channel='CH?')
 
+
+xmin = 2.26e6
+xmax = 2.28e6
+ymin = -1.01e6
+ymax = -9.9e5
+
+resolution = 200
+
+xlin = np.mgrid[xmin:xmax:resolution]
+ylin = np.mgrid[ymin:ymax:resolution]
+
+directory = '/Users/jmagyar/Documents/MappingProducts/'
+bedmap3_file = directory + 'bedmap3.nc'
+bedmap3 = xr.open_dataset(bedmap3_file, engine="netcdf4")
+
+bed_grid = xr.Dataset(coords=dict(x=("x", xlin),y=("y", ylin)))
+bedmap_interp = bedmap3.interp_like(bed_grid)
+bed_grid = bed_grid.assign(dict(bed_topography = bedmap_interp.bed_topography))
+
+
 if backmigrate:
 
     stacked_streams = {}
@@ -69,13 +90,15 @@ if migrate_P_wave:
     for cluster_num, stream in stacked_streams.items():
         stream = stream.filter('bandpass',freqmin=1,freqmax=10)
 
-        east_grid = np.linspace(-10,5,50)
-        north_grid = np.linspace(-5,10,50)
-        depth_grid = np.linspace(0,3,20)
+        #east_grid = np.linspace(-8,2,50)
+        #north_grid = np.linspace(0,10,50)
+        #depth_grid = np.linspace(0,3,30)
 
-        east_grid, north_grid, depth_grid, t_grid, coal_surf, sta_xy, centre = sa.CoalescenceSurface(east_grid,north_grid,depth_grid,stream,inv,sta=0.2,lta=5,normalise=False,modulate=True,g=8,mod_win=1.0,smooth=30,decimation=decimation,p_detect='radial_transverse',s_detect=None,mod_overlap=0.95)
+        #want to make an xarray dataset with the grid of x,y,z values for the bed.
 
-        np.savez(os.path.join(coal_path,'P_coalescence_function_'+str(cluster_num)),x=east_grid,y=north_grid,z=depth_grid,t=t_grid,coal=coal_surf)
+        coal_grid = sa.CoalescenceBedSearch(bed_grid,stream,inv,sta=0.5,lta=5,normalise=True,modulate=True,decimation=decimation,g=8,smooth=50,mod_win=1,mod_overlap=0.95,p_detect='radial_self',s_detect=None)
+        coal_grid.to_netcdf(os.path.join(coal_path,'P_coalescence_function_'+str(cluster_num))+'.nc')
+        #np.savez(os.path.join(coal_path,'P_coalescence_function_'+str(cluster_num)),x=east_grid,y=north_grid,z=depth_grid,t=t_grid,coal=coal_surf)
 
 if compute_results:
     #make a dataframe and save with the locations (x,y) and (lon,lat) and error estimates. Also provide an interval and error estimate on r for each station.

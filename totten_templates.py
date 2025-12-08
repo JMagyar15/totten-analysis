@@ -2,11 +2,11 @@
 import os
 #os.chdir('..') #change cwd so local functions can be imported
 
-from iqvis import stream_handling as sh
-from iqvis import data_objects as do
+from cryoquake import stream_handling as sh
+from cryoquake import data_objects as do
 from obspy.core.inventory import inventory
 import matplotlib.pyplot as plt
-from iqvis import dayplot_backend as db
+from cryoquake import dayplot_backend as db
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from tqdm import tqdm
@@ -39,8 +39,8 @@ for file in inv_files:
 
 network_cat = do.EventCatalogue(t1,t2,c_path)
 
-calculate_xcorr = True
-clustering = True
+calculate_xcorr = False
+clustering = False
 template_matching = True
 
 
@@ -117,21 +117,25 @@ if template_matching:
 
         templates[str(clust_id)] = central_id
 
+    #! drop these groups as appear to be coda or non stick-slip
+    templates.pop('116')
+    templates.pop('117')
+
     full_templates = {}
     full_thresholds = {}
     for temp_name, temp_id in templates.items():
         template = network_cat.select_event(temp_id)
         template.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),w_path,buffer=5)
-        template.filter('bandpass',freqmin=1,freqmax=100)   
+        template.filter('bandpass',freqmin=1,freqmax=10)   
 
         full_templates[temp_name] = template
-        full_thresholds[temp_name] = 0.8
+        full_thresholds[temp_name] = 0.5
 
     for daychunk in chunk:
         daychunk.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),w_path,buffer=60*60)
-        daychunk.filter('bandpass',freqmin=1,freqmax=100)
+        daychunk.filter('bandpass',freqmin=1,freqmax=10)
         daychunk.context('detect')
 
-        daychunk.template_catalogue(c_path,full_templates,full_thresholds,method='n_mean')
+        daychunk.template_catalogue(os.path.join(c_path,'filtered'),full_templates,full_thresholds,method='n_mean',num=3)
 
         
