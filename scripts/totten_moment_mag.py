@@ -67,10 +67,11 @@ for cluster_num, group in groups.items():
             tr.stats.starttime = UTCDateTime(2019,1,10)
             tr.remove_response(inv,output='DISP')
 
-            P_win = tr.slice(tr.stats.starttime + arrivals['P_start'][tr.stats.station],tr.stats.starttime + arrivals['P_end'][tr.stats.station])
-            P_energy = np.sqrt(np.sum((tr.data**2 * tr.stats.sampling_rate)))
+            if tr.id[-1] == 'Z':
+                P_win = tr.slice(tr.stats.starttime + arrivals['P_start'][tr.stats.station],tr.stats.starttime + arrivals['P_end'][tr.stats.station])
+                P_energy = np.sqrt(np.sum((tr.data**2 * tr.stats.sampling_rate)))
 
-            ref_energy[tr.stats.station] = P_energy
+                ref_energy[tr.stats.station] = P_energy
 
         station_mags = mm.StationMomentMagnitude(stacked_stream,arrivals,freqmin=1,freqmax=10)
 
