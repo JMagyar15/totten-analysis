@@ -4,17 +4,13 @@ import os
 
 from cryoquake import stream_handling as sh
 from cryoquake import data_objects as do
-from cryoquake import spatial_analysis as sa
 from cryoquake import moment_magnitude as mm
 from obspy.core.inventory import inventory
-import matplotlib.pyplot as plt
-from cryoquake import dayplot_backend as db
-import pandas as pd
-from matplotlib.backends.backend_pdf import PdfPages
 import tqdm
 import numpy as np
 from obspy.core import read, UTCDateTime
 import xarray as xr
+from pathlib import Path
 
 
 
@@ -23,11 +19,17 @@ t2 = sh.UTCDateTime(2019,1,30)
 
 chunk = do.SeismicChunk(t1,t2)
 
-path = '/Users/jmagyar/Documents/TottenData'
-w_path = os.path.join(path,'stacked_waveforms')
-raw_path = os.path.join(path,'waveforms')
-s_path = os.path.join(path,'stations')
-c_path = os.path.join(path,'catalogues')
+root = Path(__file__).parent.parent
+w_path = root / "stacked_waveforms"
+raw_path = root / "waveforms"
+s_path = root / "stations"
+c_path = root / "catalogues"
+
+# path = '/Users/jmagyar/Documents/TottenData'
+# w_path = os.path.join(path,'stacked_waveforms')
+# raw_path = os.path.join(path,'waveforms')
+# s_path = os.path.join(path,'stations')
+# c_path = os.path.join(path,'catalogues')
 
 inv_files = os.listdir(s_path)
 

@@ -3,14 +3,13 @@
 import os
 #os.chdir('..') #change cwd so local functions can be imported
 
-from iqvis import stream_handling as sh
-from iqvis import data_objects as do
+from cryoquake import stream_handling as sh
+from cryoquake import data_objects as do
 from obspy.core.inventory import inventory
-import matplotlib.pyplot as plt
-from iqvis import dayplot_backend as db
 import pandas as pd
-from matplotlib.backends.backend_pdf import PdfPages
-from tqdm import tqdm
+from pathlib import Path
+
+
 
 spectra = False
 detect_network = False
@@ -25,12 +24,18 @@ psd_overlap = 0.5
 
 chunk = do.SeismicChunk(t1,t2)
 
-path = '/Users/jmagyar/Documents/TottenData'
-w_path = os.path.join(path,'waveforms')
-s_path = os.path.join(path,'stations')
-c_path = os.path.join(path,'catalogues')
-p_path = os.path.join(path,'event_plots')
-spec_path = os.path.join(path,'spectrograms')
+root = Path(__file__).parent.parent
+w_path = root / "waveforms"
+s_path = root / "stations"
+c_path = root / "catalogues"
+spec_path = root / "spectrograms"
+
+# path = '/Users/jmagyar/Documents/TottenData'
+# w_path = os.path.join(path,'waveforms')
+# s_path = os.path.join(path,'stations')
+# c_path = os.path.join(path,'catalogues')
+# p_path = os.path.join(path,'event_plots')
+# spec_path = os.path.join(path,'spectrograms')
 
 
 inv_files = os.listdir(s_path)

@@ -5,15 +5,12 @@ import os
 from cryoquake import stream_handling as sh
 from cryoquake import data_objects as do
 from obspy.core.inventory import inventory
-import matplotlib.pyplot as plt
-from cryoquake import dayplot_backend as db
 import pandas as pd
-from matplotlib.backends.backend_pdf import PdfPages
-from tqdm import tqdm
 from scipy.signal import correlate
 import numpy as np
 from scipy.cluster import hierarchy
 from scipy.spatial import distance
+from pathlib import Path
 
 
 t1 = sh.UTCDateTime(2018,12,24)
@@ -21,12 +18,17 @@ t2 = sh.UTCDateTime(2019,1,30)
 
 chunk = do.SeismicChunk(t1,t2)
 
-path = '/Users/jmagyar/Documents/TottenData'
-w_path = os.path.join(path,'waveforms')
-s_path = os.path.join(path,'stations')
-c_path = os.path.join(path,'catalogues','network')
-p_path = os.path.join(path,'event_plots')
-spec_path = os.path.join(path,'spectrograms')
+root = Path(__file__).parent.parent
+w_path = root / "stacked_waveforms"
+s_path = root / "stations"
+c_path = root / "catalogues" / "network"
+
+# path = '/Users/jmagyar/Documents/TottenData'
+# w_path = os.path.join(path,'waveforms')
+# s_path = os.path.join(path,'stations')
+# c_path = os.path.join(path,'catalogues','network')
+# p_path = os.path.join(path,'event_plots')
+# spec_path = os.path.join(path,'spectrograms')
 
 
 inv_files = os.listdir(s_path)

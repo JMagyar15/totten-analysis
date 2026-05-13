@@ -76,7 +76,7 @@ if backmigrate:
         east_grid = np.linspace(-10,5,50)
         north_grid = np.linspace(-5,10,50)
         depth_grid = np.linspace(0,3,20)
-#! previously had sta=1
+        
         east_grid, north_grid, depth_grid, t_grid, coal_surf, sta_xy, centre = sa.CoalescenceSurface(east_grid,north_grid,depth_grid,stream,inv,sta=1,lta=5,normalise=True,modulate=True,g=8,mod_win=0.2,smooth=30,decimation=decimation,mod_overlap=0.95)
         np.savez(os.path.join(coal_path,'coalescence_function_'+str(cluster_num)),x=east_grid,y=north_grid,z=depth_grid,t=t_grid,coal=coal_surf)
 

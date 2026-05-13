@@ -1,6 +1,3 @@
-import os
-#os.chdir('..') #change cwd so local functions can be imported
-
 from cryoquake import stream_handling as sh
 from pathlib import Path
 
