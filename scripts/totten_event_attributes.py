@@ -1,8 +1,4 @@
-# some of the basic analysis and visualisation for the Totten data
-
 import os
-#os.chdir('..') #change cwd so local functions can be imported
-
 from cryoquake import stream_handling as sh
 from cryoquake import data_objects as do
 from cryoquake import moment_magnitude as mm
@@ -34,8 +30,10 @@ chunk = do.SeismicChunk(t1,t2)
 
 root = Path(__file__).parent.parent
 w_path = root / "waveforms"
+stack_path = root / "stacked_waveforms"
 s_path = root / "stations"
 c_path = root / "catalogues"
+m_path = root / "misfit"
 
 # path = '/Users/jmagyar/Documents/TottenData'
 # w_path = os.path.join(path,'waveforms')
@@ -51,8 +49,7 @@ inv = inventory.Inventory()
 for file in inv_files:
     temp_path = os.path.join(s_path,file)
     inv += inventory.read_inventory(temp_path,level='response',format='STATIONXML')
-
-
+    
 
 if network:
     for daychunk in chunk:
@@ -122,7 +119,7 @@ if templates:
     cluster_ind = {}
     
     for cluster_num in groups.keys():
-        stream = read(os.path.join(path,'stacked_waveforms','high_stacked_waveforms_cluster_'+str(cluster_num) + '.mseed'))
+        stream = read(os.path.join(stack_path,'high_stacked_waveforms_cluster_'+str(cluster_num) + '.mseed'))
         cluster_amps[cluster_num] = {}
         cluster_ind[cluster_num] = {}
 
@@ -319,7 +316,7 @@ if rel_amps:
 
     stacked_streams = {}
     for cluster_num in groups.keys():
-        stacked_streams[cluster_num] = read(os.path.join(path,'stacked_waveforms','high_stacked_waveforms_cluster_'+str(cluster_num) + '.mseed'))
+        stacked_streams[cluster_num] = read(os.path.join(stack_path,'high_stacked_waveforms_cluster_'+str(cluster_num) + '.mseed'))
     
     rel_amp_dict = {}
 
@@ -368,9 +365,6 @@ if rel_amps:
 
 if moment_mags:
 
-    #sta_xy, centre = sa.CartesianStationsDF(inv.select(station='TI?A'))
-    #icequake_loc = pd.read_csv(os.path.join(coal_path,'backmigration_results.csv'),index_col=0) #TODO change this to the travel time locations
-
     for daychunk in chunk:
         #look through all matched events and estimate the moment magnitude by fitting the Brune model to the spectra
         temp_cat = do.EventCatalogue(daychunk.starttime,daychunk.endtime,os.path.join(c_path,'network','low_threshold'),templates=True) #TODO change this to the low threshold catalogue
@@ -392,16 +386,8 @@ if moment_mags:
                 tr.stats.starttime = UTCDateTime(2019,1,10)
                 tr.remove_response(inv,output='DISP')
 
-
-            #coal_file = np.load(os.path.join(coal_path,'coalescence_function_' + str(cluster_num) + '.npz'))
-            #x, y, z, t, coal = coal_file['x'], coal_file['y'], coal_file['z'], coal_file['t'], coal_file['coal']
-
-            #fit, uncertainties, centres = sa.UncertaintyQuantBackM(x,y,z,t,inv.select(station='TI?A'),coal,contours=[0.75])
-
-            #arrivals = sa.ArrivalTimes(inv.select(station='TI?A'),fit,uncertainties[0.75]) #TODO need to get the uncertainties from arrival times and include these in here.
-
             try:
-                gamma_xr = xr.load_dataset(os.path.join(path,'misfit','misfit_surface_'+str(cluster_num)+'.nc'))
+                gamma_xr = xr.load_dataset(os.path.join(m_path,'misfit_surface_'+str(cluster_num)+'.nc'))
                 arrivals = mm.Misfit2Arrivals(gamma_xr)
                 sta_mag = mm.StationMomentMagnitude(disp_stream,arrivals,freqmin=1,freqmax=10)
                 M0_out, Mw_out, fc_out = mm.CombinedMomentMagnitude(sta_mag)
@@ -427,4 +413,5 @@ if moment_mags:
             att_cat.at[event.event_id,'dMw'] = dMw
             att_cat.at[event.event_id,'dM0'] = dM0
             att_cat.at[event.event_id,'dfc'] = dfc
+
         att_cat.to_csv(filename)

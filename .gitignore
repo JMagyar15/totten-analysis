@@ -9,5 +9,13 @@ __pycache__/
 *.pyc
 *.pyo
 
+#some old script and notebooks
+Totten Icequakes.ipynb
+Totten Plots (Thesis).ipynb
+totten_backmigration.py
+totten_phase_picking.py
+travel_times.ipynb
+
+
 # Jupyter checkpoints
 .ipynb_checkpoints/

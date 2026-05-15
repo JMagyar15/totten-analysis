@@ -1,16 +1,11 @@
-# some of the basic analysis and visualisation for the Totten data
-
 import os
-#os.chdir('..') #change cwd so local functions can be imported
-
 from cryoquake import stream_handling as sh
 from cryoquake import data_objects as do
 from obspy.core.inventory import inventory
 import pandas as pd
 from pathlib import Path
 
-
-
+#switches for different sections of code 
 spectra = False
 detect_network = False
 detect_subarray = False
@@ -77,6 +72,7 @@ detect_inv = inv.copy()
 detect_inv = inv.select(station='TI?A',channel='CH?')
 
 avail_rows = []
+
 
 if detect_network:
     """
@@ -167,6 +163,7 @@ if detect_subarray:
             print('Detecting events for',daychunk.str_name)
             daychunk.detect_events(sub_path,trigger_type='multistalta',sta=sta,lta=lta,delta_sta=delta_sta,delta_lta=delta_lta,epsilon=epsilon,thr_on=thr_on,thr_off=thr_off,thr_coincidence_sum=thr_coincidence_sum,avg_wave_speed=avg_wave_speed,thr_event_join=thr_event_join) 
     
+
 if detect_single:
     """
     EVENT DETECTION
