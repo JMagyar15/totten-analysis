@@ -1,7 +1,5 @@
 
 import os
-#os.chdir('..') #change cwd so local functions can be imported
-
 from cryoquake import stream_handling as sh
 from cryoquake import data_objects as do
 from cryoquake import moment_magnitude as mm
@@ -24,12 +22,7 @@ w_path = root / "stacked_waveforms"
 raw_path = root / "waveforms"
 s_path = root / "stations"
 c_path = root / "catalogues"
-
-# path = '/Users/jmagyar/Documents/TottenData'
-# w_path = os.path.join(path,'stacked_waveforms')
-# raw_path = os.path.join(path,'waveforms')
-# s_path = os.path.join(path,'stations')
-# c_path = os.path.join(path,'catalogues')
+m_path = root / "misfit"
 
 inv_files = os.listdir(s_path)
 
@@ -52,7 +45,7 @@ for cluster_num, group in groups.items():
     #firstly get the moment information for the stacked waveforms...
 
     try:
-        gamma_xr = xr.load_dataset(os.path.join(path,'misfit','misfit_surface_'+str(cluster_num)+'.nc'))
+        gamma_xr = xr.load_dataset(os.path.join(m_path,'misfit_surface_'+str(cluster_num)+'.nc'))
         arrivals = mm.Misfit2Arrivals(gamma_xr)
         group_stations[cluster_num] = gamma_xr.stations
 
@@ -125,8 +118,6 @@ for daychunk in chunk:
                 P_energy = np.sqrt(np.sum((tr.data**2 * tr.stats.sampling_rate)))
 
                 ratio = P_energy / ref_energy[tr.stats.station]
-
-                #print(tr.stats.station,ratio)
 
                 event_station_mags.at[tr.stats.station,'M0'] *= (ratio)
                 event_station_mags.at[tr.stats.station,'dM0'] *= (ratio)

@@ -6,10 +6,9 @@ import pandas as pd
 from pathlib import Path
 
 #switches for different sections of code 
-spectra = False
 detect_network = False
 detect_subarray = False
-detect_single = True
+detect_single = False
 
 t1 = sh.UTCDateTime(2018,12,24)
 t2 = sh.UTCDateTime(2019,1,30)
@@ -23,14 +22,6 @@ root = Path(__file__).parent.parent
 w_path = root / "waveforms"
 s_path = root / "stations"
 c_path = root / "catalogues"
-spec_path = root / "spectrograms"
-
-# path = '/Users/jmagyar/Documents/TottenData'
-# w_path = os.path.join(path,'waveforms')
-# s_path = os.path.join(path,'stations')
-# c_path = os.path.join(path,'catalogues')
-# p_path = os.path.join(path,'event_plots')
-# spec_path = os.path.join(path,'spectrograms')
 
 
 inv_files = os.listdir(s_path)
@@ -41,25 +32,6 @@ for file in inv_files:
     temp_path = os.path.join(s_path,file)
     inv += inventory.read_inventory(temp_path,level='response',format='STATIONXML')
 
-
-#compute median spectrograms to get feel for background seismicity, any diurnal/seasonal variations, data quality
-
-if not os.path.exists(spec_path):
-    os.mkdir(spec_path)
-
-
-if spectra:
-
-    for daychunk in chunk:
-        print('Computing PSDs for',daychunk.str_name)
-
-        daychunk.context('spectral')
-        daychunk.attach_waveforms(inv,w_path)
-        daychunk.stream = daychunk.stream.split().merge(fill_value=None)
-        daychunk.stream.trim(daychunk.starttime,daychunk.endtime,pad=True,fill_value=None)
-        daychunk.decimate(5)
-        print(daychunk.stream)
-        daychunk.make_periodograms(psd_window,psd_overlap,spec_path)
 
 #event detection on filtered and decimated data
 

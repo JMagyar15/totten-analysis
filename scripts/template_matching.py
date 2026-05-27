@@ -1,7 +1,10 @@
+"""
+SCRIPT FOR TAKING THE STA/LTA NETWORK CATALOGUE AND FINDING THE REPEATING EVENTS USING TEMPLTATE MATCHING
+"""
+
+
 
 import os
-#os.chdir('..') #change cwd so local functions can be imported
-
 from cryoquake import stream_handling as sh
 from cryoquake import data_objects as do
 from obspy.core.inventory import inventory
@@ -22,13 +25,6 @@ root = Path(__file__).parent.parent
 w_path = root / "stacked_waveforms"
 s_path = root / "stations"
 c_path = root / "catalogues" / "network"
-
-# path = '/Users/jmagyar/Documents/TottenData'
-# w_path = os.path.join(path,'waveforms')
-# s_path = os.path.join(path,'stations')
-# c_path = os.path.join(path,'catalogues','network')
-# p_path = os.path.join(path,'event_plots')
-# spec_path = os.path.join(path,'spectrograms')
 
 
 inv_files = os.listdir(s_path)
