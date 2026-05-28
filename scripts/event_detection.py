@@ -6,9 +6,9 @@ import pandas as pd
 from pathlib import Path
 
 #switches for different sections of code 
-detect_network = False
-detect_subarray = False
-detect_single = False
+detect_network = True
+detect_subarray = True
+detect_single = True
 
 t1 = sh.UTCDateTime(2018,12,24)
 t2 = sh.UTCDateTime(2019,1,30)
@@ -22,6 +22,10 @@ root = Path(__file__).parent.parent
 w_path = root / "waveforms"
 s_path = root / "stations"
 c_path = root / "catalogues"
+
+for path in [c_path]:
+    if not os.path.exists(path):
+        os.mkdir(path)
 
 
 inv_files = os.listdir(s_path)

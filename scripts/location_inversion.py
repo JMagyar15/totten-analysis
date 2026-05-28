@@ -32,10 +32,14 @@ m_path = root / "misfit"
 p_path = root / "stacked_waveforms"
 s_path = root / "stations"
 
+for path in [m_path]:
+    if not os.path.exists(path):
+        os.mkdir(path)
+
 
 bed_grid = xr.Dataset(coords=dict(x=("x", xlin),y=("y", ylin)))
 bedmap_interp = bedmap3.interp_like(bed_grid)
-bed_grid = bed_grid.assign(dict(bed_topography = bedmap_interp.bed_topography,bed_uncertainty=bedmap_interp.bed_uncertainty))
+bed_grid = bed_grid.assign(dict(bed_topography = bedmap_interp.bed_topography,bed_uncertainty = bedmap_interp.bed_uncertainty))
 
 inv_files = os.listdir(s_path)
 
@@ -45,10 +49,11 @@ for file in inv_files:
     temp_path = os.path.join(s_path,file)
     inv += inventory.read_inventory(temp_path,level='response',format='STATIONXML')
 
+inv = inv.select(station='TI?A',channel='CH?')
 
 for i, cluster_num in enumerate([31,43,34,44,33,32,39,54]):
     
-    p_picks = pd.read_csv(os.path.join(m_path,'manual_picks_' + str(cluster_num) + '.csv'),index_col=0)
+    p_picks = pd.read_csv(os.path.join(p_path,'manual_picks_' + str(cluster_num) + '.csv'),index_col=0)
     p_picks['mu'] = p_picks['P1'] + (p_picks['P2'] - p_picks['P1'])/2
     p_picks['sigma'] = (p_picks['P2'] - p_picks['P1'])/4
 

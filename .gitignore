@@ -18,6 +18,9 @@ totten_phase_picking.py
 travel_times.ipynb
 totten_stream_availability.csv
 
+#tides are not my work, and require some loca files - just say source...
+model_tides.py
+
 
 # Jupyter checkpoints
 .ipynb_checkpoints/

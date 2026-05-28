@@ -32,7 +32,7 @@ for file in inv_files:
     temp_path = os.path.join(s_path,file)
     inv += inventory.read_inventory(temp_path,level='response',format='STATIONXML')
 
-temp_cat = do.EventCatalogue(t1,t2,os.path.join(c_path,'network','filtered'),templates=True)
+temp_cat = do.EventCatalogue(t1,t2,os.path.join(c_path,'network'),templates=True)
 
 groups = temp_cat.group_split()
 
@@ -49,7 +49,7 @@ for cluster_num, group in groups.items():
         arrivals = mm.Misfit2Arrivals(gamma_xr)
         group_stations[cluster_num] = gamma_xr.stations
 
-        stacked_stream = read(os.path.join(w_path,'filtered_stacked_waveforms_cluster_' + str(cluster_num) + '.mseed'))
+        stacked_stream = read(os.path.join(w_path,'stacked_waveforms_cluster_' + str(cluster_num) + '.mseed'))
         stacked_stream.filter('bandpass',freqmin=1,freqmax=10)
 
         ref_energy = {}
@@ -87,9 +87,9 @@ for cluster_num, group in groups.items():
     #keep station mags and make copy of dataframe for each matched event and just mulitply the M0 and errors by amplitude ratio in P window
 
 for daychunk in chunk:
-    temp_cat = do.EventCatalogue(daychunk.starttime,daychunk.endtime,os.path.join(c_path,'network','filtered'),templates=True)
+    temp_cat = do.EventCatalogue(daychunk.starttime,daychunk.endtime,os.path.join(c_path,'network'),templates=True)
     att_cat = temp_cat.attributes
-    filename = os.path.join(c_path,'network','filtered','moment_magnitude__' + daychunk.str_name + '.csv')
+    filename = os.path.join(c_path,'network','moment_magnitude__' + daychunk.str_name + '.csv')
 
     for event in tqdm.tqdm(temp_cat,total=temp_cat.N):
         event.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),raw_path,buffer=10,length=25)
