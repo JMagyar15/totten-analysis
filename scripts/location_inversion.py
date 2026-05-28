@@ -1,3 +1,8 @@
+"""
+SCRIPT FOR ESTIMATING SOURCE LOCATIONS. A LOCAL VERSION OF BEDMAP3 (OR ANOTHER BED TOPOGRAPHY PRODUCT) AND A .CSV OF ARRIVAL TIMES IS NEEDED. 
+THESE ARRIVAL TIMES CAN BE FOUND IN THE GITHUB REPOSITORY, AND THE FULL PRE-COMPUTED MISFIT SURFACES IN THE MISFIT DIRECTORY.
+"""
+
 import numpy as np
 import xarray as xr
 from cryoquake import spatial_analysis as sa
@@ -31,6 +36,7 @@ root = Path(__file__).parent.parent
 m_path = root / "misfit"
 p_path = root / "stacked_waveforms"
 s_path = root / "stations"
+a_path = root / "arrivals"
 
 for path in [m_path]:
     if not os.path.exists(path):
@@ -53,7 +59,7 @@ inv = inv.select(station='TI?A',channel='CH?')
 
 for i, cluster_num in enumerate([31,43,34,44,33,32,39,54]):
     
-    p_picks = pd.read_csv(os.path.join(p_path,'manual_picks_' + str(cluster_num) + '.csv'),index_col=0)
+    p_picks = pd.read_csv(os.path.join(a_path,'manual_picks_' + str(cluster_num) + '.csv'),index_col=0)
     p_picks['mu'] = p_picks['P1'] + (p_picks['P2'] - p_picks['P1'])/2
     p_picks['sigma'] = (p_picks['P2'] - p_picks['P1'])/4
 

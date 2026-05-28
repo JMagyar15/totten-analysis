@@ -1,3 +1,7 @@
+"""
+SCRIPT FOR COMPUTING EVENT CATALOGUES FOR (A) NETWORK, (B) STATION TRIPLETS, AND (C) SINGLE STATIONS. ONLY THE NETWORK CATALOGUES ARE USED IN THE MANUSCRIPT.
+"""
+
 import os
 from cryoquake import stream_handling as sh
 from cryoquake import data_objects as do
@@ -7,8 +11,8 @@ from pathlib import Path
 
 #switches for different sections of code 
 detect_network = True
-detect_subarray = True
-detect_single = True
+detect_subarray = False
+detect_single = False
 
 t1 = sh.UTCDateTime(2018,12,24)
 t2 = sh.UTCDateTime(2019,1,30)
