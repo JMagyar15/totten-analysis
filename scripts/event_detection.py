@@ -17,9 +17,6 @@ detect_single = False
 t1 = sh.UTCDateTime(2018,12,24)
 t2 = sh.UTCDateTime(2019,1,30)
 
-psd_window = 5
-psd_overlap = 0.5
-
 chunk = do.SeismicChunk(t1,t2)
 
 root = Path(__file__).parent.parent
@@ -39,9 +36,6 @@ inv = inventory.Inventory()
 for file in inv_files:
     temp_path = os.path.join(s_path,file)
     inv += inventory.read_inventory(temp_path,level='response',format='STATIONXML')
-
-
-#event detection on filtered and decimated data
 
 
 """
