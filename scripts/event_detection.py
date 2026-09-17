@@ -13,6 +13,7 @@ from pathlib import Path
 detect_network = True
 detect_subarray = False
 detect_single = False
+detect_separate = False
 
 t1 = sh.UTCDateTime(2018,12,24)
 t2 = sh.UTCDateTime(2019,1,30)
@@ -178,3 +179,50 @@ if detect_single:
                 print('Detecting events for',daychunk.str_name)
                 daychunk.detect_events(sub_path,trigger_type='multistalta',sta=sta,lta=lta,delta_sta=delta_sta,delta_lta=delta_lta,epsilon=epsilon,thr_on=thr_on,thr_off=thr_off,thr_coincidence_sum=thr_coincidence_sum,avg_wave_speed=avg_wave_speed,thr_event_join=thr_event_join) 
         
+
+
+if detect_separate:
+    """
+    EVENT DETECTION
+    """
+
+    sta = 1.0
+    lta = 10.0
+    delta_sta = 10
+    delta_lta = 10
+    epsilon = 1.2
+    thr_on = 3
+    thr_off = 2
+    thr_coincidence_sum = 1
+    avg_wave_speed = 1.5
+    thr_event_join = 5.0
+
+    for daychunk in chunk(24*60*60):
+
+        net_path = os.path.join(c_path,'all_stations')
+        if not os.path.exists(net_path):
+            os.mkdir(net_path)
+        
+        #firstly get the data availability
+        print('Recording data availability for',daychunk.str_name)
+        daychunk.attach_waveforms(detect_inv,w_path)
+        split_stream = daychunk.stream.split()
+
+        for tr in split_stream:
+            network, station, location, channel = tr.id.split('.')
+            row = {'Network':network,'Station':station,'Location':location,'Channel':channel,'Start':tr.stats.starttime,'End':tr.stats.endtime}
+            row = pd.DataFrame(data=row,index=[tr.id])
+            avail_rows.append(row)
+
+        #now make the broadband catalogue
+        daychunk.attach_waveforms(detect_inv,w_path,buffer=60*60) #hour long buffer for filtering and STA/LTA
+        daychunk.filter('bandpass',freqmin=1,freqmax=30)
+
+        daychunk.context('detect')
+
+        print('Detecting events for',daychunk.str_name)
+        print('Single-station catalogues')
+        daychunk.detect_events(net_path,trigger_type='multistalta',sta=sta,lta=lta,delta_sta=delta_sta,delta_lta=delta_lta,epsilon=epsilon,thr_on=thr_on,thr_off=thr_off,thr_coincidence_sum=thr_coincidence_sum,avg_wave_speed=avg_wave_speed,thr_event_join=thr_event_join) 
+    
+    avail = pd.concat(avail_rows,ignore_index=True)
+    avail.to_csv('totten_stream_availability.csv')

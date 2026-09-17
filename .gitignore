@@ -3,6 +3,7 @@ stacked_waveforms/
 waveforms/
 spectrograms/
 outputs/
+scattering_coefficients/
 
 # Python cache
 __pycache__/

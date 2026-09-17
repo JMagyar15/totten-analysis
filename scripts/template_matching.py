@@ -24,6 +24,8 @@ template_matching = False
 stack_waveforms = True
 mod_waveforms = True
 
+calculate_xcorr_single = True
+
 
 t1 = sh.UTCDateTime(2018,12,24)
 t2 = sh.UTCDateTime(2019,1,30)
@@ -48,6 +50,23 @@ for file in inv_files:
 inv = inv.select(station='TI?A',channel='CH?')
 
 network_cat = do.EventCatalogue(t1,t2,c_path)
+
+if calculate_xcorr_single:
+
+    buffer = 10
+    #want to now do this with daychunk loops so not attaching and filtering each event individually?
+    #so get daystream, filter, and chop out the filtered sections (as done in the notebook)
+    all_traces = []
+
+    for daychunk in chunk:
+        #want to attach and filter the waveforms for this day
+
+        daychunk.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),w_path,buffer=60*60)
+        daychunk.filter('bandpass',freqmin=1,freqmax=30) #relatively low high corner to help with correlation
+
+        for event in network_cat:
+            event_stream = chunk.stream.slice(event.starttime-buffer,event.endtime+buffer) #add buffer to help with start/end times
+            all_traces.append([tr.data for tr in event_stream])
 
 
 if calculate_xcorr:
