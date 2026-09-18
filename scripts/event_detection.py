@@ -10,10 +10,10 @@ import pandas as pd
 from pathlib import Path
 
 #switches for different sections of code 
-detect_network = True
+detect_network = False
 detect_subarray = False
 detect_single = False
-detect_separate = False
+detect_separate = True
 
 t1 = sh.UTCDateTime(2018,12,24)
 t2 = sh.UTCDateTime(2019,1,30)
@@ -186,8 +186,8 @@ if detect_separate:
     EVENT DETECTION
     """
 
-    sta = 1.0
-    lta = 10.0
+    sta = 4.0
+    lta = 40.0
     delta_sta = 10
     delta_lta = 10
     epsilon = 1.2
@@ -216,6 +216,7 @@ if detect_separate:
 
         #now make the broadband catalogue
         daychunk.attach_waveforms(detect_inv,w_path,buffer=60*60) #hour long buffer for filtering and STA/LTA
+        daychunk.decimate(5)
         daychunk.filter('bandpass',freqmin=1,freqmax=30)
 
         daychunk.context('detect')
