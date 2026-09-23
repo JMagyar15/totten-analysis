@@ -10,6 +10,9 @@ __pycache__/
 *.pyc
 *.pyo
 
+#big unformated files
+*.npz
+
 #some old script and notebooks
 Totten Icequakes.ipynb
 Totten Plots (Thesis).ipynb
