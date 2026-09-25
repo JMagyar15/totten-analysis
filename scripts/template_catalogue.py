@@ -13,7 +13,7 @@ import fastcluster as fc
 
 clust_threshold = 0.15
 match_threshold = 0.5
-min_cluster_size = 50
+min_cluster_size = 20
 
 root = Path(__file__).parent.parent
 w_path = root / "waveforms"
@@ -78,6 +78,12 @@ for i, clust_N in enumerate(clust_ind):
 Use the selected templates to produce a full event catalogue for the season of repeating events.
 """
 
+#going to want to just in here and drop the templates not associated with stick-slip
+
+templates.pop('1244')
+templates.pop('1722')
+templates.pop('1749')
+
 full_templates = {}
 full_thresholds = {}
 
@@ -86,6 +92,7 @@ for temp_name, temp_id in templates.items():
     template.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),w_path,buffer=5,length=15,extra=10)
     template.decimate(5)
     template.filter('bandpass',freqmin=1,freqmax=30)   
+    template.stream = template.stream.split()
 
     full_templates[temp_name] = template
     full_thresholds[temp_name] = match_threshold

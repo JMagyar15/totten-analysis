@@ -25,7 +25,7 @@ def build_event_matrix(daychunk, c_path, buffer, window_length):
     all_traces = []
     catalogue = do.EventCatalogue(daychunk.starttime,daychunk.endtime,c_path)
     for event in catalogue:
-        event_stream = daychunk.stream.slice(event.starttime-buffer,event.starttime+window_length+buffer) #add buffer to help with start/end times
+        event_stream = daychunk.stream.slice(event.starttime-buffer,event.starttime+window_length) #add buffer to help with start/end times
         all_traces.append(np.stack([tr.data for tr in event_stream],axis=0)) #stacked array of [stations,time] for each event
 
     X = np.stack(all_traces,axis=1) #stacked array of [stations,events,time]
@@ -71,7 +71,7 @@ def main():
     chunk_i = do.SeismicChunk(t1,t2)
 
     buffer = 5 #in case trigger was early or late, add buffer to contain the beginning of the event
-    window_length = 10
+    window_length = 15
     max_lag = 400 #maximum lag of 4 seconds either side
     outer_cc_mat = ()
 
