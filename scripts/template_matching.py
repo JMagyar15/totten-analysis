@@ -18,17 +18,66 @@ from pathlib import Path
 from tqdm import tqdm
 
 
+calculate_xcorr_single = True
 calculate_xcorr = False
 clustering = False
 template_matching = False
-stack_waveforms = True
-mod_waveforms = True
-
-calculate_xcorr_single = True
+stack_waveforms = False
+mod_waveforms = False
 
 
-t1 = sh.UTCDateTime(2018,12,24)
-t2 = sh.UTCDateTime(2019,1,30)
+def calculate_xcorr_equal_length(all_traces, block_size=32):
+    """Return the best normalized cross-correlation for equal-length events."""
+    traces = np.asarray(all_traces)
+    num_events, num_samples, num_stations = traces.shape
+    correlation_length = 2 * num_samples - 1
+
+    spectra = np.fft.rfft(
+        traces,
+        n=correlation_length,
+        axis=1,
+    ).transpose(0, 2, 1)
+    trace_energy = np.sum(traces**2, axis=1)
+    cc_mat = np.zeros((num_events, num_events))
+
+    for i_start in tqdm(range(0, num_events, block_size), total=(num_events + block_size - 1) // block_size):
+        i_end = min(i_start + block_size, num_events)
+        spectra_i = spectra[i_start:i_end]
+        energy_i = trace_energy[i_start:i_end]
+
+        for j_start in range(i_start, num_events, block_size):
+            j_end = min(j_start + block_size, num_events)
+            correlation = np.fft.irfft(
+                spectra_i[:, None, :, :] * np.conj(spectra[j_start:j_end][None, :, :, :]),
+                n=correlation_length,
+                axis=-1,
+            )
+            if num_samples > 1:
+                correlation = np.concatenate(
+                    (correlation[..., -(num_samples - 1):], correlation[..., :num_samples]),
+                    axis=-1,
+                )
+
+            denominator = np.sqrt(
+                energy_i[:, None, :] * trace_energy[j_start:j_end][None, :, :]
+            )
+            with np.errstate(divide='ignore', invalid='ignore'):
+                correlation /= denominator[..., None]
+                scores = np.nanmax(correlation, axis=(-1, -2))
+
+            cc_mat[i_start:i_end, j_start:j_end] = scores
+            cc_mat[j_start:j_end, i_start:i_end] = scores.T
+
+    np.fill_diagonal(cc_mat, 1.0)
+    return cc_mat
+
+
+#t1 = sh.UTCDateTime(2018,12,24)
+#t2 = sh.UTCDateTime(2019,1,30)
+
+t1 = sh.UTCDateTime(2019,1,5)
+t2 = sh.UTCDateTime(2019,1,6)
+
 
 chunk = do.SeismicChunk(t1,t2)
 
@@ -53,20 +102,41 @@ network_cat = do.EventCatalogue(t1,t2,c_path)
 
 if calculate_xcorr_single:
 
-    buffer = 10
+    c_path = root / "catalogues" / "all_stations"
+
+
+    buffer = 5
     #want to now do this with daychunk loops so not attaching and filtering each event individually?
     #so get daystream, filter, and chop out the filtered sections (as done in the notebook)
     all_traces = []
 
     for daychunk in chunk:
+        print('Attaching and processing waveforms for ' + str(daychunk.starttime.date) + '...')
         #want to attach and filter the waveforms for this day
 
         daychunk.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),w_path,buffer=60*60)
         daychunk.filter('bandpass',freqmin=1,freqmax=30) #relatively low high corner to help with correlation
 
-        for event in network_cat:
-            event_stream = chunk.stream.slice(event.starttime-buffer,event.endtime+buffer) #add buffer to help with start/end times
-            all_traces.append([tr.data for tr in event_stream])
+        day_cat = do.EventCatalogue(daychunk.starttime,daychunk.endtime,c_path)
+
+        print('Processing ' + str(day_cat.N) + ' events for ' + str(daychunk.starttime.date) + '...')
+
+        for event in day_cat:
+            event_stream = daychunk.stream.slice(event.starttime-buffer,event.starttime+10+buffer) #add buffer to help with start/end times
+            all_traces.append(np.stack([tr.data for tr in event_stream],axis=1)) #stacked array of [time,stations] for each event
+
+
+    print('Computing cross-correlation matrix...')
+    N = len(all_traces)
+    num_sta = len(inv.select(station='TI?A',channel='CHZ'))
+    cc_mat = calculate_xcorr_equal_length(all_traces)
+
+    cc_mat[cc_mat > 1] = 1.0
+
+    dissimilarity = 1-cc_mat
+    dissimilarity = distance.squareform(dissimilarity) #flattened version - same values as dissimilary so 1 - cc_mat
+    np.savez(os.path.join(c_path,'cc_matrix_N.npz'),cc_mat=cc_mat,diss=dissimilarity)
+
 
 
 if calculate_xcorr:
