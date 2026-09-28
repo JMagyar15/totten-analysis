@@ -17,8 +17,8 @@ stack_path = root / "stacked_waveforms"
 s_path = root / "stations"
 c_path = root / "catalogues" / "all_stations"
 
-t1 = sh.UTCDateTime(2019,1,3)
-t2 = sh.UTCDateTime(2019,1,5)
+t1 = sh.UTCDateTime(2018,12,24)
+t2 = sh.UTCDateTime(2019,1,30)
 
 
 def build_event_matrix(daychunk, c_path, buffer, window_length):
@@ -72,13 +72,13 @@ def main():
 
     buffer = 5 #in case trigger was early or late, add buffer to contain the beginning of the event
     window_length = 15
-    max_lag = 400 #maximum lag of 4 seconds either side
+    max_lag = 100 #maximum lag of 2 seconds either side
     outer_cc_mat = ()
 
     for i, daychunk_i in enumerate(chunk_i):
         daychunk_i.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),w_path,buffer=60*60)
         daychunk_i.decimate(5)
-        daychunk_i.filter('bandpass',freqmin=1,freqmax=30) #relatively low high corner to help with correlation
+        daychunk_i.filter('bandpass',freqmin=3,freqmax=30) #relatively low high corner to help with correlation
 
         X = build_event_matrix(daychunk_i, c_path, buffer, window_length)
 
@@ -98,7 +98,7 @@ def main():
                 print('Processing ' + str(daychunk_j.starttime.date) + ' against ' + str(daychunk_i.starttime.date) + '...')
                 daychunk_j.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),w_path,buffer=60*60)
                 daychunk_j.decimate(5)
-                daychunk_j.filter('bandpass',freqmin=1,freqmax=30) #relatively low high corner to help with correlation
+                daychunk_j.filter('bandpass',freqmin=3,freqmax=30) #relatively low high corner to help with correlation
 
                 Y = build_event_matrix(daychunk_j, c_path, buffer, window_length)
 
