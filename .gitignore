@@ -28,3 +28,6 @@ model_tides.py
 
 # Jupyter checkpoints
 .ipynb_checkpoints/
+
+#ds store
+.DS_Store
