@@ -18,7 +18,7 @@ s_path = root / "stations"
 c_path = root / "catalogues" / "all_stations"
 
 t1 = sh.UTCDateTime(2018,12,24)
-t2 = sh.UTCDateTime(2019,1,30)
+t2 = sh.UTCDateTime(2019,12,28)
 
 
 def build_event_matrix(daychunk, c_path, buffer, window_length):
@@ -72,7 +72,7 @@ def main():
 
     buffer = 5 #in case trigger was early or late, add buffer to contain the beginning of the event
     window_length = 15
-    max_lag = 100 #maximum lag of 2 seconds either side
+    max_lag = 400 #maximum lag of 4 seconds either side
     outer_cc_mat = ()
 
     for i, daychunk_i in enumerate(chunk_i):
@@ -115,7 +115,7 @@ def main():
     np.fill_diagonal(xcorr, 1.0)
 
     #now save the xcorr matrix to a file for later use
-    filename = c_path / str('xcorr_matrix_') + str(t1.date) + '_' + str(t2.date) + '.npz'
+    filename = c_path / (str('xcorr_matrix_') + str(t1.date) + '_' + str(t2.date) + '.npz')
     np.savez(filename,cc_mat=xcorr)
 
 

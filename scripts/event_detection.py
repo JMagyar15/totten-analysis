@@ -186,10 +186,10 @@ if detect_separate:
     EVENT DETECTION
     """
 
-    sta = 1.0
-    lta = 10.0
-    delta_sta = 10
-    delta_lta = 10
+    sta = 2.0
+    lta = 20.0
+    delta_sta = 5
+    delta_lta = 5
     epsilon = 1.2
     thr_on = 3
     thr_off = 2
