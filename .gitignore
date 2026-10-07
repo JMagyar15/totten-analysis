@@ -30,5 +30,4 @@ model_tides.py
 .ipynb_checkpoints/
 
 #ds store
-.DS_Store
 *.DS_Store

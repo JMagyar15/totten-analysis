@@ -186,20 +186,21 @@ if detect_separate:
     EVENT DETECTION
     """
 
-    sta = 1.0
-    lta = 10.0
+    sta = 2.0
+    lta = 30.0
     delta_sta = 10
     delta_lta = 10
     epsilon = 1.2
-    thr_on = 3
-    thr_off = 2
+    thr_on = 5
+    thr_off = 3
     thr_coincidence_sum = 1
     avg_wave_speed = 1.5
     thr_event_join = 5.0
+    min_duration = 5.0
 
     for daychunk in chunk(24*60*60):
 
-        net_path = os.path.join(c_path,'all_stations')
+        net_path = os.path.join(c_path,'classic_high_threshold')
         if not os.path.exists(net_path):
             os.mkdir(net_path)
         
@@ -222,8 +223,30 @@ if detect_separate:
         daychunk.context('detect')
 
         print('Detecting events for',daychunk.str_name)
-        print('Single-station catalogues')
-        daychunk.detect_events(net_path,trigger_type='multistalta',sta=sta,lta=lta,delta_sta=delta_sta,delta_lta=delta_lta,epsilon=epsilon,thr_on=thr_on,thr_off=thr_off,thr_coincidence_sum=thr_coincidence_sum,avg_wave_speed=avg_wave_speed,thr_event_join=thr_event_join) 
+        # daychunk.detect_events(net_path,
+        #                        trigger_type='multistalta',
+        #                        sta=sta,
+        #                        lta=lta,
+        #                        delta_sta=delta_sta,
+        #                        delta_lta=delta_lta,
+        #                        epsilon=epsilon,
+        #                        thr_on=thr_on,
+        #                        thr_off=thr_off,
+        #                        thr_coincidence_sum=thr_coincidence_sum,
+        #                        avg_wave_speed=avg_wave_speed,
+        #                        thr_event_join=thr_event_join,
+        #                        min_duration=min_duration) 
+
+        daychunk.detect_events(net_path,
+                                trigger_type='classicstalta',
+                                sta=sta,
+                                lta=lta,
+                                thr_on=thr_on,
+                                thr_off=thr_off,
+                                thr_coincidence_sum=thr_coincidence_sum,
+                                avg_wave_speed=avg_wave_speed,
+                                thr_event_join=thr_event_join,
+                                min_duration=min_duration) 
     
     avail = pd.concat(avail_rows,ignore_index=True)
     avail.to_csv('totten_stream_availability.csv')
