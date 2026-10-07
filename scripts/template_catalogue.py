@@ -13,7 +13,7 @@ import fastcluster as fc
 
 clust_threshold = 0.15
 match_threshold = 0.5
-min_cluster_size = 20
+min_cluster_size = 10
 
 root = Path(__file__).parent.parent
 w_path = root / "waveforms"
@@ -37,7 +37,8 @@ t2 = sh.UTCDateTime(2019,1,30)
 chunk = do.SeismicChunk(t1,t2)
 network_cat = do.EventCatalogue(t1,t2,c_path)
 
-filename = c_path / 'cc_matrix_N.npz' #will need to change this to updated file path when re-processed
+filename = c_path / (str('xcorr_matrix_') + str(t1.date) + '_' + str(t2.date) + '.npz')
+
 xcorr_file = np.load(filename, allow_pickle=True)
 xcorr = xcorr_file['cc_mat']
 
@@ -52,6 +53,7 @@ dissimilarity = distance.squareform(dissimilarity) #flattened version - same val
 
 linkage = fc.linkage(dissimilarity, method="single")
 clusters = hierarchy.fcluster(linkage, clust_threshold, criterion="distance")
+del dissimilarity
 
 unique, counts = np.unique(clusters,return_counts=True)
 clust_ind = unique[counts >= min_cluster_size]
@@ -73,6 +75,8 @@ for i, clust_N in enumerate(clust_ind):
     templates[str(clust_N)] = central_id
     template_loc[str(clust_N)] = network_cat.events.index.get_loc(central_id)
 
+del xcorr
+
 
 """
 Use the selected templates to produce a full event catalogue for the season of repeating events.
@@ -80,18 +84,15 @@ Use the selected templates to produce a full event catalogue for the season of r
 
 #going to want to just in here and drop the templates not associated with stick-slip
 
-templates.pop('1244')
-templates.pop('1722')
-templates.pop('1749')
 
 full_templates = {}
 full_thresholds = {}
 
 for temp_name, temp_id in templates.items():
     template = network_cat.select_event(temp_id)
-    template.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),w_path,buffer=5,length=15,extra=10)
+    template.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),w_path,buffer=5,length=5,extra=10)
     template.decimate(5)
-    template.filter('bandpass',freqmin=1,freqmax=30)   
+    template.filter('bandpass',freqmin=3,freqmax=30)   
     template.stream = template.stream.split()
 
     full_templates[temp_name] = template
@@ -100,7 +101,7 @@ for temp_name, temp_id in templates.items():
 for daychunk in chunk:
     daychunk.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),w_path,buffer=60*60)
     daychunk.decimate(5)
-    daychunk.filter('bandpass',freqmin=1,freqmax=30)
+    daychunk.filter('bandpass',freqmin=3,freqmax=30)
     daychunk.context('detect')
 
     daychunk.template_catalogue(c_path,full_templates,full_thresholds,method='n_mean',num=1)

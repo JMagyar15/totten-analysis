@@ -15,10 +15,10 @@ root = Path(__file__).parent.parent
 w_path = root / "waveforms"
 stack_path = root / "stacked_waveforms"
 s_path = root / "stations"
-c_path = root / "catalogues" / "all_stations"
+c_path = root / "catalogues" / "classic_high_threshold"
 
 t1 = sh.UTCDateTime(2018,12,24)
-t2 = sh.UTCDateTime(2019,12,28)
+t2 = sh.UTCDateTime(2019,1,30)
 
 
 def build_event_matrix(daychunk, c_path, buffer, window_length):
@@ -54,7 +54,7 @@ def compute_similarity_matrix(X, Y, max_lag):
         C = np.nan_to_num(C,nan=0.0)
         similarity = np.maximum(similarity, C)
 
-    return np.max(similarity, axis=0) #take max over stations to get a single similarity matrix for all events
+    return np.max(similarity, axis=0), np.argmax(similarity, axis=0) #take max over stations to get a single similarity matrix for all events
 
 
 def main():
@@ -71,9 +71,11 @@ def main():
     chunk_i = do.SeismicChunk(t1,t2)
 
     buffer = 5 #in case trigger was early or late, add buffer to contain the beginning of the event
-    window_length = 15
-    max_lag = 400 #maximum lag of 4 seconds either side
+    window_length = 10
+    max_lag = 200
+
     outer_cc_mat = ()
+    outer_arg_mat = ()
 
     for i, daychunk_i in enumerate(chunk_i):
         daychunk_i.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),w_path,buffer=60*60)
@@ -84,11 +86,12 @@ def main():
 
         chunk_j = do.SeismicChunk(t1,t2) #reset the chunk so loop initises correctly
         inner_cc_mat = ()
-
+        inner_arg_mat = ()
         for j, daychunk_j in enumerate(chunk_j):
             if i > j:
                 print('Skipping ' + str(daychunk_j.starttime.date) + ' since it has already been processed...')
-                inner_cc_mat += (outer_cc_mat[j][i].T,) #append the already calculated cc_mat for this day pair
+                inner_cc_mat += (np.matrix_transpose(outer_cc_mat[j][i]),)
+                inner_arg_mat += (np.matrix_transpose(outer_arg_mat[j][i]),)
                 continue
             elif i == j:
                 print('Processing ' + str(daychunk_j.starttime.date) + ' against itself...')
@@ -102,10 +105,11 @@ def main():
 
                 Y = build_event_matrix(daychunk_j, c_path, buffer, window_length)
 
-            cc_mat = compute_similarity_matrix(X, Y, max_lag)
+            cc_mat, arg_mat = compute_similarity_matrix(X, Y, max_lag)
             inner_cc_mat += (cc_mat,)
-
+            inner_arg_mat += (arg_mat,)
         outer_cc_mat += (inner_cc_mat,)
+        outer_arg_mat += (inner_arg_mat,)
 
     mat_list = [[mat for mat in group] for group in outer_cc_mat]
     xcorr = np.block(mat_list)
@@ -114,9 +118,12 @@ def main():
     xcorr[xcorr > 1.0] = 1.0
     np.fill_diagonal(xcorr, 1.0)
 
+    mat_list = [[mat for mat in group] for group in outer_arg_mat]
+    arg_mat = np.block(mat_list)
+
     #now save the xcorr matrix to a file for later use
     filename = c_path / (str('xcorr_matrix_') + str(t1.date) + '_' + str(t2.date) + '.npz')
-    np.savez(filename,cc_mat=xcorr)
+    np.savez(filename,cc_mat=xcorr,arg_mat=arg_mat)
 
 
 if __name__ == '__main__':
