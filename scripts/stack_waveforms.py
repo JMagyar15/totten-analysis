@@ -9,7 +9,7 @@ from scipy.cluster import hierarchy
 from scipy.spatial import distance
 from pathlib import Path
 from tqdm import tqdm
-import fastcluster as fc
+#import fastcluster as fc
 
 
 def collect_events(chunk, c_path, buffer, window_length):
