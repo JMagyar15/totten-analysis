@@ -96,6 +96,11 @@ Use the selected templates to produce a full event catalogue for the season of r
 """
 
 #going to want to just in here and drop the templates not associated with stick-slip
+templates.pop('2851')
+templates.pop('2846')
+templates.pop('2757')
+templates.pop('1972')
+templates.pop('1550')
 
 
 full_templates = {}
