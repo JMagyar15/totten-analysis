@@ -28,7 +28,7 @@ root = Path(__file__).parent.parent
 w_path = root / "stacked_waveforms"
 raw_path = root / "waveforms"
 s_path = root / "stations"
-c_path = root / "catalogues"
+c_path = root / "catalogues" / "classic_high_threshold"
 m_path = root / "misfit"
 
 inv_files = os.listdir(s_path)
@@ -39,7 +39,7 @@ for file in inv_files:
     temp_path = os.path.join(s_path,file)
     inv += inventory.read_inventory(temp_path,level='response',format='STATIONXML')
 
-temp_cat = do.EventCatalogue(t1,t2,os.path.join(c_path,'network'),templates=True)
+temp_cat = do.EventCatalogue(t1,t2,c_path,templates=True)
 
 groups = temp_cat.group_split()
 
@@ -49,20 +49,22 @@ group_arrivals = {}
 group_stations = {}
 
 for cluster_num, group in groups.items():
+    print(cluster_num)
     #firstly get the moment information for the stacked waveforms...
 
     try:
         gamma_xr = xr.load_dataset(os.path.join(m_path,'misfit_surface_'+str(cluster_num)+'.nc'))
         arrivals = mm.Misfit2Arrivals(gamma_xr)
-        group_stations[cluster_num] = gamma_xr.stations
+        group_stations[cluster_num] = ['TI3A','TI6A','TI8A'] #gamma_xr.stations
+        arrivals = arrivals.loc[group_stations[cluster_num]]
 
         stacked_stream = read(os.path.join(w_path,'stacked_waveforms_cluster_' + str(cluster_num) + '.mseed'))
-        stacked_stream.filter('bandpass',freqmin=1,freqmax=10)
+        #stacked_stream.filter('bandpass',freqmin=3,freqmax=30)
 
         ref_energy = {}
 
         for tr in stacked_stream:
-            if tr.stats.station not in gamma_xr.stations:
+            if tr.stats.station not in group_stations[cluster_num]:
                 stacked_stream.remove(tr)
         
         for tr in stacked_stream:
@@ -75,7 +77,7 @@ for cluster_num, group in groups.items():
 
                 ref_energy[tr.stats.station] = P_energy
 
-        station_mags = mm.StationMomentMagnitude(stacked_stream,arrivals,freqmin=1,freqmax=10)
+        station_mags = mm.StationMomentMagnitude(stacked_stream,arrivals,freqmin=1,freqmax=30)
 
         print(cluster_num)
         print(station_mags)
@@ -94,13 +96,14 @@ for cluster_num, group in groups.items():
     #keep station mags and make copy of dataframe for each matched event and just mulitply the M0 and errors by amplitude ratio in P window
 
 for daychunk in chunk:
-    temp_cat = do.EventCatalogue(daychunk.starttime,daychunk.endtime,os.path.join(c_path,'network'),templates=True)
+    temp_cat = do.EventCatalogue(daychunk.starttime,daychunk.endtime,c_path,templates=True)
     att_cat = temp_cat.attributes
-    filename = os.path.join(c_path,'network','moment_magnitude__' + daychunk.str_name + '.csv')
+    filename = os.path.join(c_path,'moment_magnitude__' + daychunk.str_name + '.csv')
 
     for event in tqdm.tqdm(temp_cat,total=temp_cat.N):
-        event.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),raw_path,buffer=10,length=25)
-        event.filter('bandpass',freqmin=1,freqmax=10)
+        event.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),raw_path,buffer=10,length=20)
+        event.decimate(5)
+        event.filter('bandpass',freqmin=3,freqmax=30)
 
         cluster_num = event.group
 

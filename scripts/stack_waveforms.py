@@ -98,7 +98,7 @@ all_sim = []
 
 for daychunk in chunk:
     print('Slicing data for ' + str(daychunk.starttime.date))
-    daychunk.attach_waveforms(inv.select(station='TI?A',channel='CHZ'),w_path,buffer=60*60)
+    daychunk.attach_waveforms(inv.select(station='TI?A',channel='CH?'),w_path,buffer=60*60)
     daychunk.decimate(5)
     daychunk.filter('bandpass',freqmin=3,freqmax=30) #relatively low high corner to help with correlation
     X_groups, X_groups_len, X_sim = collect_events(daychunk,c_path,10,20)
